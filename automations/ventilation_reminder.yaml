@@ -1,0 +1,117 @@
+blueprint:
+  name: Ventilation reminder
+  description: 'Notifies users if a window/door is left open too long when ventilating
+    (Lüften). Optimal ventilation duration is dependent on the outside temperature.
+
+    '
+  domain: automation
+  input:
+    entity:
+      name: The entity that will trigger the automation
+      description: A binary sensor (e.g. binary_sensor.ventilating_living_room)
+      selector:
+        entity:
+          domain: binary_sensor
+          multiple: false
+    duration_warm:
+      name: Max duration, warm outside
+      description: Duration after which to remind the user, if it is warm outside
+      default:
+        minutes: 15
+      selector:
+        duration: {}
+    duration_cold:
+      name: Max duration, cold outside
+      description: Duration after which to remind the user, if it is cold outside
+      default:
+        minutes: 5
+      selector:
+        duration: {}
+    temperature_entity:
+      name: Temperature entity
+      selector:
+        entity:
+          domain: sensor
+          device_class: temperature
+          multiple: false
+    temperature_transition_point:
+      name: Warm/Cold transition point
+      description: 'Temperature below which it is considered cold outside. (Same unit
+        as temperature entity)
+
+        '
+      default: 20
+      selector:
+        number:
+          min: 0.0
+          max: 68.0
+          unit_of_measurement: ˚C/˚F
+          mode: slider
+          step: 1.0
+    notify_service:
+      name: Notify service
+      description: The service that will be called to deliver the notification (ie.
+        notify.mobile_app_my_phone)
+      default: notify.mobile_app_YOURDEVICE
+      selector:
+        template: {}
+    notification_msg:
+      name: Notification Message
+      default: Window was left open
+      selector:
+        template: {}
+    notification_channel:
+      name: Notification Channel
+      default: ventilation
+      selector:
+        text: {}
+    notification_tag:
+      name: Notification Tag
+      description: Tag used to clear notification and prevent duplicate notifications
+      selector:
+        text: {}
+  source_url: https://github.com/MichaelBrunn3r/ha-automation/blob/main/blueprints/automation/ventilation_reminder.yaml
+
+trigger:
+  - platform: state
+    entity_id: !input entity
+    from: 'off'
+    to: 'on'
+    id: opened
+  - platform: state
+    entity_id: !input entity
+    from: 'on'
+    to: 'off'
+    id: closed
+
+action:
+  - alias: Window/Door closed
+    if:
+      - condition: trigger
+        id: closed
+    then:
+      - alias: Remove notification if still present
+        service: !input notify_service
+        data:
+          message: clear_notification
+          data:
+            tag: !input notification_tag
+      - stop: Ventilation stoped
+  - alias: Timeout until maximum ventilation duration (temperature dependent) was exceeded
+    if:
+      - condition: numeric_state
+        entity_id: !input temperature_entity
+        above: !input temperature_transition_point
+    then:
+      - delay: !input duration_warm
+    else:
+      - delay: !input duration_cold
+  - alias: Notify users that ventilation duration was exceeded
+    service: !input notify_service
+    data:
+      message: !input notification_msg
+      data:
+        tag: !input notification_tag
+        sticky: true
+        channel: !input notification_channel
+mode: restart

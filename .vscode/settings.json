@@ -1,0 +1,25 @@
+{
+  "yaml.customTags": ["!input scalar"],
+  "[yaml]": {
+    "editor.autoIndent": "full",
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.quickSuggestions": {
+      "other": true,
+      "comments": false,
+      "strings": true
+    }
+  },
+  "[home-assistant]": {
+    "editor.autoIndent": "full",
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true,
+    "editor.quickSuggestions": {
+      "other": true,
+      "comments": false,
+      "strings": true
+    }
+  }
+}
