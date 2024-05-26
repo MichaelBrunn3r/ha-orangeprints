@@ -52,25 +52,25 @@ blueprint:
     weekday_start_comfort:
       name: Weekday start comfort mode
       description: The time when the thermostat should switch to comfort mode
-      default: '8:00:00'
+      default: "8:00:00"
       selector:
         time:
     weekday_end_comfort:
       name: Weekday end comfort mode
       description: The time when the thermostat should switch to eco mode
-      default: '23:00:00'
+      default: "23:00:00"
       selector:
         time:
     weekend_start_comfort:
       name: Weekend start comfort mode
       description: The time when the thermostat should switch to comfort mode
-      default: '8:00:00'
+      default: "8:00:00"
       selector:
         time:
     weekend_end_comfort:
       name: Weekend end comfort mode
       description: The time when the thermostat should switch to eco mode
-      default: '23:00:00'
+      default: "23:00:00"
       selector:
         time:
 

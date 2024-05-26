@@ -1,5 +1,9 @@
 {
-  "yaml.customTags": ["!input scalar"],
+  "files.associations": {
+    "*.dash": "yaml",
+    "**/esphome/*.yaml": "esphome",
+    "*.yaml": "home-assistant"
+  },
   "[yaml]": {
     "editor.autoIndent": "full",
     "editor.insertSpaces": true,

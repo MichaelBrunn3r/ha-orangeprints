@@ -1,8 +1,8 @@
 blueprint:
   name: Cycle Scenes
-  description: ''
+  description: ""
   domain: script
-  author: 'Michael Brunner'
+  author: "Michael Brunner"
   # source_url: ""
   input:
     scenes:
@@ -14,7 +14,7 @@ blueprint:
             - domain: scene
     helper_index:
       name: Index Helper
-      description: 'Counter helper to keep track of the positions in the cycle'
+      description: "Counter helper to keep track of the positions in the cycle"
       selector:
         entity:
           domain:
@@ -28,20 +28,20 @@ mode: restart
 sequence:
   - variables:
       scenes: !input scenes
-      num_scenes: '{{ scenes | length }}'
+      num_scenes: "{{ scenes | length }}"
       index: !input helper_index
   - if:
       - condition: template
-        value_template: '{{ restart }}'
+        value_template: "{{ restart }}"
     then:
       - service: counter.reset
         target:
-          entity_id: '{{ index }}'
+          entity_id: "{{ index }}"
   - service: scene.turn_on
     target:
-      entity_id: '{{ scenes[(states(index) | int) % num_scenes] }}'
+      entity_id: "{{ scenes[(states(index) | int) % num_scenes] }}"
   - service: counter.set_value
     data:
-      value: '{{ ((states(index) | int) + 1) % num_scenes  }}'
+      value: "{{ ((states(index) | int) + 1) % num_scenes  }}"
     target:
       entity_id: !input helper_index
