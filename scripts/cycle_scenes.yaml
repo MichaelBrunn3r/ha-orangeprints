@@ -3,7 +3,7 @@ blueprint:
   description: ""
   domain: script
   author: "Michael Brunner"
-  # source_url: ""
+  source_url: "https://github.com/MichaelBrunn3r/ha-orangeprints/blob/main/scripts/cycle_scenes.yaml"
   input:
     scenes:
       name: Scenes

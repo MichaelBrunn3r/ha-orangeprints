@@ -1,10 +1,13 @@
 blueprint:
   name: Ventilation reminder
-  description: 'Notifies users if a window/door is left open too long when ventilating
+  description:
+    "Notifies users if a window/door is left open too long when ventilating
     (Lüften). Optimal ventilation duration is dependent on the outside temperature.
 
-    '
+    "
   domain: automation
+  author: "Michael Brunner"
+  source_url: "https://github.com/MichaelBrunn3r/ha-orangeprints/blob/main/automations/ventilation_reminder.yaml"
   input:
     entity:
       name: The entity that will trigger the automation
@@ -36,10 +39,11 @@ blueprint:
           multiple: false
     temperature_transition_point:
       name: Warm/Cold transition point
-      description: 'Temperature below which it is considered cold outside. (Same unit
+      description:
+        "Temperature below which it is considered cold outside. (Same unit
         as temperature entity)
 
-        '
+        "
       default: 20
       selector:
         number:
@@ -50,7 +54,8 @@ blueprint:
           step: 1.0
     notify_service:
       name: Notify service
-      description: The service that will be called to deliver the notification (ie.
+      description:
+        The service that will be called to deliver the notification (ie.
         notify.mobile_app_my_phone)
       default: notify.mobile_app_YOURDEVICE
       selector:
@@ -70,18 +75,17 @@ blueprint:
       description: Tag used to clear notification and prevent duplicate notifications
       selector:
         text: {}
-  source_url: https://github.com/MichaelBrunn3r/ha-automation/blob/main/blueprints/automation/ventilation_reminder.yaml
 
 trigger:
   - platform: state
     entity_id: !input entity
-    from: 'off'
-    to: 'on'
+    from: "off"
+    to: "on"
     id: opened
   - platform: state
     entity_id: !input entity
-    from: 'on'
-    to: 'off'
+    from: "on"
+    to: "off"
     id: closed
 
 action:

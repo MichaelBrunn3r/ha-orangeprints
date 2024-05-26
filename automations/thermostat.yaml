@@ -1,6 +1,8 @@
 blueprint:
   name: Thermostat
   domain: automation
+  author: "Michael Brunner"
+  source_url: "https://github.com/MichaelBrunn3r/ha-orangeprints/blob/main/automations/thermostat.yaml"
   input:
     entity_thermostat:
       name: Thermostat entity
