@@ -1,0 +1,113 @@
+blueprint:
+  name: Toggle lights
+  description: >
+    Toggles lights off/on.
+
+    The "light.toggle" service will always turn on all of the targeted lights, even if some
+    of them were previously off.
+
+    This problem can be fixed by storing the state of the lights in a generated scene before turning them off
+    and then activating that scene to turn them on.
+
+
+    Dynamic inputs:
+      - set_state ["on"/"off"]: Do not toggle if lights are already on/off
+  domain: script
+  author: 'Michael Brunner'
+  # source_url: ""
+  input:
+    target:
+      name: Lights
+      selector:
+        target:
+          entity:
+            domain:
+              - light
+    exclude:
+      name: Exclude
+      default: []
+      selector:
+        target:
+          entity:
+            domain:
+              - light
+    exclude_hue_groups:
+      name: Exclude Hue groups
+      default: true
+      selector:
+        boolean:
+    turn_off_action:
+      name: '"Turn off" action (Optional)'
+      description: Overwrite the default action used to turn off all lights
+      default: []
+      selector:
+        action:
+
+mode: restart
+
+variables:
+  # Inputs
+  in_target: !input target
+  in_exclude: !input exclude
+  in_exclude_hue_groups: !input exclude_hue_groups
+  in_turn_off_action: !input turn_off_action
+
+  # Other
+  scene_id: "{{ 'zgen_' + this.entity_id | replace('.', '_') }}"
+  scene_entity_id: "{{ 'scene.' + scene_id  }}"
+  targeted_entities: >
+    {%- from 'MichaelBrunn3r/orangeprints_utils.jinja' import expand_target  %}
+    {{- expand_target(in_target) }}
+  targeted_hue_groups: "{{ targeted_entities | select('is_state_attr', 'is_hue_group', True) | list }}"
+  excluded_entites: >
+    {%- from 'MichaelBrunn3r/orangeprints_utils.jinja' import expand_target  %}
+    {{- expand_target(in_exclude) }}
+  lights: >
+    {%- set data = namespace(lights=targeted_entities | reject('in', excluded_entites) | select('match', '^light.') | list) %}
+    {% if in_exclude_hue_groups %}
+      {%- set data.lights=data.lights | reject('in', targeted_hue_groups) | list %}
+    {% endif %}
+    {{- data.lights }}
+  lights_on: "{{ lights | select('is_state', 'on') | list }}"
+
+sequence:
+  - if:
+      - condition: template
+        value_template: '{{ lights_on | length > 0 }}'
+    then:
+      # State is on -> Turn lights off
+      - if:
+          - condition: template
+            value_template: "{{ set_state != 'on' }}"
+        then:
+          # Save state of lights in new scene
+          - service: scene.create
+            data:
+              scene_id: '{{ scene_id }}'
+              snapshot_entities: '{{ lights }}'
+          # Turn off lights
+          - if:
+              - condition: template
+                value_template: "{{ in_turn_off_action == '[]' }}"
+            then: !input turn_off_action
+            else:
+              - service: light.turn_off
+                target:
+                  entity_id: '{{ lights_on }}'
+    else:
+      # State is off -> Turn lights on
+      - if:
+          - condition: template
+            value_template: "{{ set_state != 'off' }}"
+        then:
+          - if:
+              - condition: template
+                value_template: '{{ states[scene_entity_id] == None }}'
+            then:
+              - service: light.turn_on
+                target:
+                  entity_id: '{{ lights }}'
+            else:
+              - service: scene.turn_on
+                target:
+                  entity_id: '{{ scene_entity_id }}'

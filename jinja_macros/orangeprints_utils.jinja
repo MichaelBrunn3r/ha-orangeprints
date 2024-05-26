@@ -1,0 +1,29 @@
+{% macro expand_target(target) %}
+  {%- set data = namespace(entities=[]) %}
+  {#- Add entities #}
+  {%- if target.entity_id is defined %}
+    {%- if target.entity_id is string %}
+      {%- set data.entities=data.entities + [target.entity_id] %}
+    {%- else %}
+      {%- set data.entities=data.entities + target.entity_id %}
+    {%- endif %}
+  {%- endif %}
+  {#- Add entities in areas #}
+  {%- if target.area_id is string %}
+    {%- set data.entities=data.entities + area_entities(target.area_id) %}
+  {%- else %}
+    {%- for area_id in target.area_id %}
+      {%- set data.entities=data.entities + area_entities(area_id) %}
+    {%- endfor %}
+  {%- endif %}
+  {#- Add entities with labels #}
+  {%- if target.label_id is string %}
+    {%- set data.entities=data.entities + label_entities(target.label_id) %}
+  {%- else %}
+    {%- for label_id in target.label_id %}
+      {%- set data.entities=data.entities + label_entities(label_id) %}
+    {%- endfor %}
+  {%- endif %}
+  {#- Return #}
+  {{- data.entities }}
+{% endmacro %}
