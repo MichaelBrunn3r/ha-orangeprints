@@ -1,0 +1,115 @@
+blueprint:
+  name: Motion activated light
+  description: Turn on a light when motion is detected
+  domain: automation
+  author: Michael Brunner
+  source_url: https://github.com/MichaelBrunn3r/ha-orangeprints/blob/main/scripts/cycle_scenes.yaml
+  input:
+    lights:
+      name: Lights
+      selector:
+        target:
+          entity:
+            domain: light
+    motion_sensors:
+      name: Motion sensors
+      selector:
+        entity:
+          domain: binary_sensor
+          device_class: motion
+          multiple: true
+    illuminance_sensor:
+      name: Illuminance sensor
+      selector:
+        entity:
+          domain: sensor
+          device_class: illuminance
+    timeout_on_to_dim:
+      name: Timeout
+      description: Time to leave the light on after motion was detected
+      default: 120
+      selector:
+        number:
+          min: 0
+          max: 3600
+          unit_of_measurement: seconds
+    timeout_dim_to_off:
+      name: Dim timeout
+      description: Time to leave lights dimmed before turning them off
+      default: 5
+      selector:
+        number:
+          min: 0
+          max: 3600
+          unit_of_measurement: seconds
+    illuminance_threshold:
+      name: Illuminance threshold
+      description: Illuminance value above which the lights won't be turned on
+      default: 20
+      selector:
+        number:
+          min: 0
+          max: 100000
+          unit_of_measurement: lx
+
+# Every time motion is detected, we restart the timout
+mode: restart
+max_exceeded: silent
+
+trigger:
+  platform: state
+  entity_id: !input motion_sensors
+  from: "off"
+  to: "on"
+
+variables:
+  # Inputs
+  in_lights: !input lights
+
+  # Other
+  lights: |
+    {%- from 'MichaelBrunn3r/orangeprints_utils.jinja' import entities_targeted_by  %}
+    {{- entities_targeted_by(in_lights) | from_json | select('match', '^light.') | list }}
+  lights_on: "{{ lights | select('is_state', 'on') | list }}"
+  scene_id: "{{ 'zgen_' + this.entity_id | replace('.', '_') }}"
+  scene_entity_id: "{{ 'scene.' + scene_id  }}"
+
+action:
+  - if:
+      - condition: numeric_state
+        entity_id: !input illuminance_sensor
+        below: !input illuminance_threshold
+    then:
+      # Turn lights on if they are off
+      - if:
+          - condition: template
+            value_template: "{{ lights_on | length <= 0 }}"
+        then:
+          - if:
+              - condition: template
+                value_template: "{{ states[scene_entity_id] == None }}"
+            then:
+              - service: light.turn_on
+                target: !input lights
+            else:
+              - service: scene.turn_on
+                target:
+                  entity_id: "{{ scene_entity_id }}"
+      - delay: !input timeout_on_to_dim
+      # Save state of lights before dimming them
+      - service: scene.create
+        data:
+          scene_id: "{{ scene_id }}"
+          snapshot_entities: "{{ lights }}"
+      - service: light.turn_on
+        target: !input lights
+        data:
+          brightness_step_pct: -20
+      - delay: !input timeout_dim_to_off
+      - service: light.turn_on
+        target: !input lights
+        data:
+          transition: 1
+          brightness_step_pct: 20
+      - service: light.turn_off
+        target: !input lights
