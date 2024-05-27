@@ -1,4 +1,4 @@
-{% macro expand_target(target) %}
+{%- macro entities_targeted_by(target) %}
   {%- set data = namespace(entities=[]) %}
   {#- Add entities #}
   {%- if target.entity_id is defined %}
@@ -25,5 +25,5 @@
     {%- endfor %}
   {%- endif %}
   {#- Return #}
-  {{- data.entities }}
-{% endmacro %}
+  {{- data.entities | to_json -}}
+{%- endmacro %}
